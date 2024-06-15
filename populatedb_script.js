@@ -1,8 +1,6 @@
 #! /usr/bin/env node
 
-console.log(
-  'This script populates some test books, authors, genres and bookinstances to your database. Specified database as argument - e.g.: node populatedb "mongodb+srv://cooluser:coolpassword@cluster0.lz91hw2.mongodb.net/local_library?retryWrites=true&w=majority"'
-)
+console.log("This script populates some test data to your database.")
 
 const Item = require("./models/item")
 const Category = require("./models/category")
@@ -19,10 +17,10 @@ main().catch((err) => console.log(err))
 
 async function main() {
   console.log("Debug: About to connect")
-  await mongoose.connect(mongoDB)
+  await mongoose.connect(mongoDB, { dbName: "db" })
   console.log("Debug: Should be connected?")
-  await createItems()
   await createCategories()
+  await createItems()
   console.log("Debug: Closing mongoose")
   mongoose.connection.close()
 }
@@ -30,6 +28,19 @@ async function main() {
 // We pass the index to the ...Create functions so that, for example,
 // genre[0] will always be the Fantasy genre, regardless of the order
 // in which the elements of promise.all's argument complete.
+
+async function categoryCreate(index, name, description, url) {
+  const category = new Category({
+    name: name,
+    description: description,
+    url: url,
+  })
+
+  await category.save()
+  categories[index] = category
+  console.log(`Added category: ${name}`)
+}
+
 async function itemCreate(
   index,
   name,
@@ -52,34 +63,63 @@ async function itemCreate(
   console.log(`Added item: ${name}`)
 }
 
-async function categoryCreate(index, name, description, url) {
-  const category = new Category({
-    name: name,
-    description: description,
-    url: url,
-  })
-
-  await category.save()
-  categories[index] = category
-  console.log(`Added category: ${name}`)
-}
-
-async function createItems() {
-  console.log("Adding genres")
+async function createCategories() {
+  console.log("Adding categories")
   await Promise.all([
-    genreCreate(0, "Fantasy"),
-    genreCreate(1, "Science Fiction"),
-    genreCreate(2, "French Poetry"),
+    categoryCreate(0, "Groceries", "...", "https://"),
+    categoryCreate(1, "Home", "...", "https://"),
+    categoryCreate(2, "Wireless devices", "...", "https://"),
+    categoryCreate(3, "Books", "...", "https://"),
   ])
 }
 
-async function createCategories() {
-  console.log("Adding authors")
+async function createItems() {
+  console.log("Adding items")
   await Promise.all([
-    authorCreate(0, "Patrick", "Rothfuss", "1973-06-06", false),
-    authorCreate(1, "Ben", "Bova", "1932-11-8", false),
-    authorCreate(2, "Isaac", "Asimov", "1920-01-02", "1992-04-06"),
-    authorCreate(3, "Bob", "Billings", false, false),
-    authorCreate(4, "Jim", "Jones", "1971-12-16", false),
+    itemCreate(
+      0,
+      "Lavazza",
+      "Cafe Barista Espresso Perfetto",
+      "Groceries",
+      29.99,
+      999,
+      "https://"
+    ),
+    itemCreate(
+      1,
+      "Gimber No.2 Brut",
+      "Ginger Juice 700ml Bio",
+      "Groceries",
+      29.95,
+      499,
+      "https://"
+    ),
+    itemCreate(
+      2,
+      "Sustania",
+      "Kitchen Bin 50l Anti-Odour",
+      "Home",
+      26.99,
+      999,
+      "https://"
+    ),
+    itemCreate(
+      3,
+      "Aoslen Headphones",
+      "Reduction Noise Mic Screen LED HiFI Stereo Sound 42H Duration Play",
+      "Wireless devices",
+      19.99,
+      999,
+      "https://"
+    ),
+    itemCreate(
+      4,
+      "Votre Atention est votre superpouvoir, Fabien Olicard",
+      "Dans ce livre, il vous propose de tester votre niveau.",
+      "Books",
+      18.95,
+      99,
+      "https://"
+    ),
   ])
 }
